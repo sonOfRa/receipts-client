@@ -1,0 +1,332 @@
+openapi: 3.0.2
+info:
+  version: "1.0.0-SNAPSHOT"
+  title: "Example API for receipts"
+  description: "API for generating receipts and mailing them to users"
+
+tags:
+  - name: "receipts"
+    description: "Receipt operations"
+
+servers:
+  - url: http://localhost:8080/v1
+
+paths:
+  /receipt:
+    post:
+      summary: "Create new Receipt"
+      operationId: "newReceipt"
+      tags:
+        - receipts
+      requestBody:
+        description: "Data for receipt"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Receipt"
+      responses:
+        202:
+          description: "Accepted"
+        400:
+          description: "Invalid Data"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        500:
+          description: "Internal Server Error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+components:
+  schemas:
+    Receipt:
+      required:
+        - header
+        - carrierName
+        - carrierAddress
+        - taxNumber
+        - receiptDate
+        - receiptTotal
+        - receiptGiven
+        - receiptnumber
+        - cashdesknumber
+        - change
+        - footer
+        - location
+        - items
+        - receiptCurrency
+        - receiptTax
+        - receiptId
+      type: "object"
+      properties:
+        receiptId:
+          type: "integer"
+          format: "int64"
+          example: "5"
+        header:
+          type: "string"
+          description: "Text header for the receipt"
+          example: "Hier könnte ihr Header stehen!"
+        carrierName:
+          type: "string"
+          description: "Name of the carrier"
+          example: "Example corp"
+        carrierAddress:
+          type: "string"
+          description: "Address of the carrier"
+          example: "Example street, 12345 Wherever"
+        taxNumber:
+          type: "string"
+          description: "Taxnumber of the Carrier"
+          example: "UID Nr. DE123456789"
+        receiptDate:
+          type: "string"
+          format: "date-time"
+          description: "date and time for the receipt"
+        receiptTotal:
+          type: "number"
+          description: "Total Sum incl. Taxes"
+          example: "17.53"
+        receiptGiven:
+          type: "number"
+          description: "Given Total of Customer"
+          example: "17.53"
+        receiptnumber:
+          type: "integer"
+          format: "int64"
+          description: "Number of the receipt"
+          example: "31512"
+        cashdesknumber:
+          type: "integer"
+          format: "int64"
+          description: "Cash register number from which the receipt originates"
+          example: "14"
+        change:
+          type: "number"
+          format: "double"
+          description: "Customers exchange money"
+          example: "2.34"
+        footer:
+          type: "string"
+          description: "footer text of the receipt"
+          example: "Vielen Dank für Ihren Einkauf!"
+        location:
+          type: "string"
+          description: "Location of the point of sale"
+          example: "Hofladen"
+        email:
+          type: "string"
+          format: "email"
+          description: "Email address to send the receipt to"
+        receiptCurrency:
+          type: "string"
+          description: "ISO 4217 Currency Code"
+          example: "EUR"
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReceiptItem"
+          minItems: 1
+        receiptTax:
+          $ref: "#/components/schemas/ReceiptTax"
+        tseData:
+          $ref: "#/components/schemas/TseData"
+    ReceiptItem:
+      required:
+        - itemName
+        - itemPrice
+        - itemQuantity
+        - vatShortDescription
+      type: "object"
+      properties:
+        itemName:
+          type: "string"
+          description: "Name of the item"
+          example:
+            "Erdbeeren 500g"
+        itemPrice:
+          type: "number"
+          format: "double"
+          description: "Price of Itemposition"
+          example: "7.99"
+        itemUnitPrice:
+          type: "number"
+          format: "double"
+          description: "Price per unit, in Euro inkl. Taxes"
+          example: "5.50"
+        itemQuantity:
+          type: "number"
+          format: "double"
+          description: "Amount of item in receipt"
+          example: "2.543"
+        itemSpecialPrice:
+          type: "number"
+          format: "double"
+          description: "Special Price for Itemposition like Manual Price. If not null it must be taken"
+          example: "2.53"
+        packingunitName:
+          type: "string"
+          description: "Name of Packingunt e.g. kg or schale"
+          example: "Schale"
+        vatShortDescription:
+          type: "string"
+          description: "Charakter to represent vattype"
+          example: "A"
+        discount:
+          $ref: "#/components/schemas/Discount"
+    ReceiptTax:
+      type: "object"
+      required:
+        - netSum
+        - taxSum
+        - bruttoSum
+        - receiptTaxItems
+      properties:
+        netSum:
+          type: "number"
+          description: "Sum of Receipt without Taxes"
+        taxSum:
+          type: "number"
+          description: "Sum of Taxes of the Receipt"
+        bruttoSum:
+          type: "number"
+          description: "Sum of Receipt including Taxes"
+        receiptTaxItems:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReceiptTaxItem"
+          minItems: 1
+    ReceiptTaxItem:
+      type: "object"
+      required:
+        - netSum
+        - taxSum
+        - bruttoSum
+        - vatShortDescription
+        - taxrate
+      properties:
+        taxrate:
+          type: "number"
+          format: "double"
+          description: "Value of Taxrate"
+          example: "7"
+        vatShortDescription:
+          type: "string"
+          description: "Charakter to represent vattype"
+          example: "A"
+        netSum:
+          type: "number"
+          format: "double"
+          description: "Sum of receipt for Taxrate without Taxes"
+        taxSum:
+          type: "number"
+          format: "double"
+          description: "Sum of Taxes for Taxrate of the Receipt"
+        bruttoSum:
+          type: "number"
+          format: "double"
+          description: "Sum of receipt for Taxrate including Taxes"
+    Discount:
+      type: "object"
+      required:
+        - discountValue
+        - discountText
+      properties:
+        discountValue:
+          type: "number"
+          format: "double"
+          description: "Discountvalue for position"
+          example: "-0.25"
+        discountText:
+          type: "string"
+          description: "Textual description of the discount"
+          example: "10% Mitarbeiterrabatt"
+    TseData:
+      type: "object"
+      required:
+        - signature
+        - transactionNumber
+        - transactionStart
+        - transactionEnd
+        - serialNumber
+        - signatureCount
+        - timeFormat
+        - publicKey
+        - signatureAlgorithm
+        - qrCodeString
+      properties:
+        signature:
+          type: "string"
+          description: "receiptsignature from tse"
+          example: "MEQCIHQRwSL6tvG3DoffVxVVR7ylGLrCRrlsgO08xls019QuAiBO2Qx3mHC1XdajX13Y7PNQ4TXmf3e4g4iagoxqpuaTLg=="
+        transactionNumber:
+          type: "integer"
+          format: "int64"
+          description: "transactionnumber of TSE"
+          example: "25"
+        transactionStart:
+          type: "string"
+          description: "datetime of the first Transaction for current receipt"
+          format: "date-time"
+          example: "2019-07-30T14:40:33.000Z"
+        transactionEnd:
+          type: "string"
+          description: "datetime of the last Transaction for current receipt"
+          format: "date-time"
+          example: "2019-07-30T14:40:33.000Z"
+        serialNumber:
+          type: "string"
+          description: "serial number of used tse"
+          example: "12345-abcde-67890"
+        signatureCount:
+          type: "integer"
+          format: "int64"
+          description: "signature count of TSE"
+          example: "125"
+        timeFormat:
+          type: "string"
+          description: "time format of TSE"
+          example: "date-time"
+        publicKey:
+          type: "string"
+          description: "public of tse"
+          example: "BKRaS+BAaTnwCJPHLFUY1UYk88UXNFOPOjelUVSh1vBCRBNefihVIejklN4n9bIPBdFbnY265YgzxUq9ys9hXig="
+        signatureAlgorithm:
+          type: "string"
+          description: "used signature algorithm of tse"
+          example: "SHA256withECDSA"
+        qrCodeString:
+          type: "string"
+          description: "String with Data to create qrCode for receipt"
+          example: "V0;SwissbitDemo;KassenBeleg-V1;Beleg^6.90_0.00_0.00_0.00_0.00^6.90:Bar;25;125;2019-07-30T14:40:33.000Z;2019-07-30T14:40:34.000Z;SHA256withECDSA;unixTime;MEQCIHQRwSL6tvG3DoffVxVVR7ylGLrCRrlsgO08xls019QuAiBO2Qx3mHC1XdajX13Y7PNQ4TXmf3e4g4iagoxqpuaTLg==;BKRaS+BAaTnwCJPHLFUY1UYk88UXNFOPOjelUVSh1vBCRBNefihVIejklN4n9bIPBdFbnY265YgzxUq9ys9hXig="
+    ApiError:
+      required:
+        - timeStamp
+        - statusCode
+        - message
+      type: "object"
+      properties:
+        timeStamp:
+          type: "string"
+          format: "date-time"
+          description: "The time at which the error occurred"
+          example: "2019-07-30T14:40:33.000Z"
+        statusCode:
+          type: "integer"
+          format: "int32"
+          description: "The HTTP Status Code of the request"
+        message:
+          type: "string"
+          description: "A descriptive error message"
+        detailMessage:
+          type: "string"
+          description: "A more detailed error message, like an exception message"
